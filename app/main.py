@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 app = FastAPI(title="SecDev Course App", version="0.1.0")
 
@@ -14,12 +14,13 @@ class Objective(BaseModel):
     description: Optional[str] = None
     isComplete: bool
 
+
 class KeyResult(BaseModel):
     id: int
-    objective_id: int # Айди цели
+    objective_id: int  # Айди цели
     title: str
-    target_value: int # Цель результата
-    current_value: int = 0 # Текущий результат
+    target_value: int  # Цель результата
+    current_value: int = 0  # Текущий результат
 
 
 # Временное "хранилище" данных
@@ -33,10 +34,11 @@ def create_objective(obj: Objective):
     # Проверка на уникальность id
     for existing in objectives:
         if existing.id == obj.id:
-            raise HTTPException(status_code=400, detail="Objective with this id already exists")
+            raise HTTPException(
+                status_code=400, detail="Objective with this id already exists"
+            )
     objectives.append(obj)
     return obj
-
 
 
 # 2. Получить все цели (GET /objectives)
@@ -54,16 +56,19 @@ def create_key_result(kr: KeyResult):
 
     # Проверяем уникальность id
     if any(existing.id == kr.id for existing in key_results):
-        raise HTTPException(status_code=400, detail="KeyResult with this id already exists")
+        raise HTTPException(
+            status_code=400, detail="KeyResult with this id already exists"
+        )
 
     # Проверяем, что current_value != target_value
     if kr.current_value == kr.target_value:
-        raise HTTPException(status_code=400, detail="current_value cannot be equal to target_value at creation")
+        raise HTTPException(
+            status_code=400,
+            detail="current_value cannot be equal to target_value at creation",
+        )
 
     key_results.append(kr)
     return kr
-
-
 
 
 # 4. Обновить прогресс ключевого результата (PUT /key_results/{kr_id})
@@ -72,7 +77,10 @@ def update_key_result(kr_id: int, current_value: int):
     for kr in key_results:
         if kr.id == kr_id:
             if current_value > kr.target_value:
-                raise HTTPException(status_code=400, detail="current_value cannot exceed target_value")
+                raise HTTPException(
+                    status_code=400,
+                    detail="current_value cannot exceed target_value",
+                )
 
             kr.current_value = current_value
             return kr
@@ -84,6 +92,7 @@ def update_key_result(kr_id: int, current_value: int):
 @app.get("/objectives/{obj_id}/key_results", response_model=List[KeyResult])
 def get_key_results_for_objective(obj_id: int):
     return [kr for kr in key_results if kr.objective_id == obj_id]
+
 
 # 6. Получить цель по ID (GET /objectives/{obj_id})
 @app.get("/objectives/{obj_id}", response_model=Objective)

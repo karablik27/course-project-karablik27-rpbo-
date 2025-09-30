@@ -5,15 +5,15 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_not_found_item():
-    r = client.get("/items/999")
+def test_objective_not_found():
+    r = client.get("/objectives/999")
     assert r.status_code == 404
     body = r.json()
-    assert "error" in body and body["error"]["code"] == "not_found"
+    assert body["detail"] == "Objective not found"
 
 
-def test_validation_error():
-    r = client.post("/items", params={"name": ""})
-    assert r.status_code == 422
+def test_keyresult_not_found():
+    r = client.put("/key_results/999", params={"current_value": 5})
+    assert r.status_code == 404
     body = r.json()
-    assert body["error"]["code"] == "validation_error"
+    assert body["detail"] == "KeyResult not found"
