@@ -180,7 +180,7 @@ def delete_objective(obj_id: int, db: Session = Depends(get_db)):
 def get_objective_progress(obj_id: int, db: Session = Depends(get_db)):
     krs = db.query(KeyResultDB).filter(KeyResultDB.objective_id == obj_id).all()
     if not krs:
-        raise HTTPException(status_code=404, detail="No Key Results for this Objective")
+        raise HTTPException(status_code=404, detail="No Key Results for this Objective.")
 
     total = sum(kr.target_value for kr in krs)
     current = sum(kr.current_value for kr in krs)
