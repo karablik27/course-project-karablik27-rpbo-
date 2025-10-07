@@ -1,0 +1,12 @@
+# Security Non-Functional Requirements (NFR)
+
+| ID     | Название                            | Описание                                                                 | Метрика / Порог                    | Проверка (чем / где)                 | Компонент         | Приоритет | Связь с Issue |
+|--------|-------------------------------------|--------------------------------------------------------------------------|------------------------------------|------------------------------------|------------------|------------|---------------|
+| NFR-01 | Производительность API              | FastAPI эндпоинты отвечают ≤ 500 мс на 95% запросов                     | p95 ≤ 500 ms                      | Нагрузочный тест (K6 / Locust)     | FastAPI backend  | Medium     | issue: #13 `NFR-01` |
+| NFR-02 | Контроль ошибок                     | Процент неуспешных HTTP-запросов ≤ 1%                                   | error_rate ≤ 1%                   | pytest + K6                        | FastAPI backend  | High       | issue: #14 `NFR-02` |
+| NFR-03 | Ограничение входных данных          | Тело POST-запроса не превышает 1 МБ                                     | max_body_size = 1 MB              | Конфиг FastAPI + тесты             | API endpoints    | Medium     | issue: #15 `NFR-03` |
+| NFR-04 | Централизованная обработка ошибок   | Исключения логируются и возвращаются в формате RFC 7807                 | ≥ 95% обработанных ошибок         | Middleware + pytest                | FastAPI app      | High       | issue: #16 `NFR-04` |
+| NFR-05 | Безопасность базы данных            | Все операции выполняются через SQLAlchemy ORM (без raw SQL)             | 100% ORM-запросов                 | Code Review + Static Analysis      | DB Layer         | High       | issue: #17 `NFR-05` |
+| NFR-06 | Логирование запросов                | Все HTTP-запросы и ответы фиксируются с уровнем INFO+                   | 100% запросов                     | Uvicorn access logs                | Backend          | Medium     | issue: #18 `NFR-06` |
+| NFR-07 | Валидация пользовательского ввода   | Все входные данные проверяются Pydantic-схемами                         | 100% endpoint’ов                  | pytest (validation tests)          | API Layer        | High       | issue: #19 `NFR-07` |
+| NFR-08 | Покрытие тестами                    | Код покрыт тестами не менее чем на 80% строк                            | coverage ≥ 80%                    | pytest + coverage report (CI)      | CI / Backend     | High       | issue: #20 `NFR-08` |
