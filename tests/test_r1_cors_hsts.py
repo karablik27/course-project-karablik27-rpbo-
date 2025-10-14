@@ -5,16 +5,18 @@ from app.main import app
 
 client = TestClient(app)
 
+
 def test_hsts_header_present():
     r = client.get("/objectives")
     assert "Strict-Transport-Security" in r.headers
+
 
 def test_cors_allows_known_origin():
     # Если ALLOWED_ORIGINS задан и включает этот Origin — должен пройти preflight
     r = client.options(
         "/objectives",
         headers={
-            "Origin": "http://localhost:5173",      # добавь этот origin в ALLOWED_ORIGINS для теста в .env
+            "Origin": "http://localhost:5173",
             "Access-Control-Request-Method": "GET",
         },
     )
@@ -22,6 +24,7 @@ def test_cors_allows_known_origin():
     acr = {k.lower(): v for k, v in r.headers.items()}
     assert r.status_code in (200, 204)
     assert acr.get("access-control-allow-origin") in ("*", "http://localhost:5173")
+
 
 def test_cors_blocks_unknown_origin():
     r = client.options(

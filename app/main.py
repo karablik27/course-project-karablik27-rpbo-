@@ -1,6 +1,7 @@
 # app/main.py
-import os
 import logging
+import os
+
 from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 
@@ -61,8 +62,11 @@ app.include_router(key_results.router, prefix="/key_results", tags=["Key Results
 logger = logging.getLogger("access")
 logger.setLevel(logging.INFO)
 stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+stream_handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+)
 logger.addHandler(stream_handler)
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
