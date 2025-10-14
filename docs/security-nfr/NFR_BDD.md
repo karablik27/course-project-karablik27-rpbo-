@@ -97,5 +97,5 @@ Scenario: Попытка SQL-инъекции не приводит к изме�
 ---
 
 **Связанные документы:**
-- [`NFR.md`](./NFR.md)
-- [`NFR_TRACEABILITY.md`](./NFR_TRACEABILITY.md)
+- [`NFR.md`](NFR.md)
+- [`NFR_TRACEABILITY.md`](NFR_TRACEABILITY.md)
