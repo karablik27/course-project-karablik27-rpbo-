@@ -1,11 +1,26 @@
-[tool.ruff]
+[tool.black]
 line-length = 100
-target-version = "py311"
-exclude = ["venv", ".venv", "build", "dist"]
-
-[tool.ruff.lint]
-select = ["E", "F", "W", "I"]
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
 line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["venv", ".venv", "build", "dist", "migrations"]
+
+[tool.ruff.lint]
+# Базовые и расширенные правила: ошибки, предупреждения, импорт, безопасность
+select = ["E", "F", "W", "I", "B", "S", "UP"]
+ignore = ["E501", "B008", "S101", "S603", "S607"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true

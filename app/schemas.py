@@ -1,12 +1,10 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict
 
 
 # --- Objective ---
 class ObjectiveBase(BaseModel):
     title: str
-    description: Optional[str] = None
+    description: str | None = None
     isComplete: bool = False
 
 

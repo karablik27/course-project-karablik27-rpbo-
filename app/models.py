@@ -12,9 +12,7 @@ class ObjectiveDB(Base):
     description = Column(String, nullable=True)
     isComplete = Column(Boolean, default=False)
 
-    key_results = relationship(
-        "KeyResultDB", back_populates="objective", cascade="all, delete"
-    )
+    key_results = relationship("KeyResultDB", back_populates="objective", cascade="all, delete")
 
 
 class KeyResultDB(Base):

@@ -16,9 +16,7 @@ def test_post_requires_api_key_when_set():
     assert r.json()["title"] == "Unauthorized"
 
     # С правильным ключом — проходит дальше (409/400/200 — неважно, главное не 401)
-    r2 = client.post(
-        "/objectives", json={"title": "x"}, headers={"X-API-Key": "secret123"}
-    )
+    r2 = client.post("/objectives", json={"title": "x"}, headers={"X-API-Key": "secret123"})
     assert r2.status_code != 401
 
     # вернём ключ в «выключено», чтобы не влиял на другие тесты
