@@ -1,9 +1,9 @@
 # app/main.py
 import logging
 import os
-from typing import Set
+from collections.abc import Awaitable, Callable
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
@@ -12,7 +12,7 @@ from app.middleware.limits import BodySizeLimitMiddleware
 from app.middleware.security import ApiKeyGateMiddleware, HSTSMiddleware
 
 from .db import Base, engine
-from .routers import key_results, objectives
+from .routers import key_results, objectives, upload
 
 # === Инициализация БД (создаст таблицы, если их нет) ===
 Base.metadata.create_all(bind=engine)
@@ -66,19 +66,22 @@ if os.getenv("RFC7807_ENABLED", "1") == "1":
 # === Роутеры ===
 app.include_router(objectives.router, prefix="/objectives", tags=["Objectives"])
 app.include_router(key_results.router, prefix="/key_results", tags=["Key Results"])
+app.include_router(upload.router, prefix="/files", tags=["Files"])
 
 # === Логирование запросов (access) ===
 logger = logging.getLogger("access")
 logger.setLevel(logging.INFO)
 stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-)
+stream_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 logger.addHandler(stream_handler)
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    """Логирование всех запросов с кодами ответа."""
     response = await call_next(request)
     logger.info(f"{request.method} {request.url.path} -> {response.status_code}")
     return response
@@ -100,7 +103,7 @@ def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
         return
 
     # Сервисные пути, которые не проверяем
-    skip_paths: Set[str] = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
+    skip_paths: set[str] = {"/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"}
     bad = []
 
     for route in app.routes:
@@ -109,9 +112,7 @@ def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
         if route.path in skip_paths:
             continue
         # Проверяем только основные HTTP-методы
-        if not set(route.methods or set()).intersection(
-            {"GET", "POST", "PUT", "PATCH", "DELETE"}
-        ):
+        if not set(route.methods or set()).intersection({"GET", "POST", "PUT", "PATCH", "DELETE"}):
             continue
         # Если нет response_model — фиксируем
         if route.response_model is None:
