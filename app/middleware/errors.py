@@ -7,23 +7,37 @@ from collections.abc import Awaitable, Callable
 from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
-LOG_FILE = "error.log"
+if os.environ.get("ENV") == "prod":
+    LOG_DIR = "/app/logs"
+    LOG_FILE = f"{LOG_DIR}/error.log"
+else:
+    LOG_DIR = "."
+    LOG_FILE = "error.log"
 
 
 def _ensure_logger() -> logging.Logger:
-    """Гарантированно создаёт FileHandler, даже если pytest перехватывает logging."""
+    """Создаёт безопасный FileLogger с fallback в stdout."""
     logger = logging.getLogger("error_logger")
     logger.setLevel(logging.ERROR)
 
-    # Удаляем все старые хендлеры (pytest может их подменять)
     for h in list(logger.handlers):
         logger.removeHandler(h)
 
-    # Гарантируем наличие файла
-    os.makedirs(os.path.dirname(LOG_FILE) or ".", exist_ok=True)
-    open(LOG_FILE, "a").close()
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        if not os.path.exists(LOG_FILE):
+            with open(LOG_FILE, "a", encoding="utf-8"):
+                pass
 
-    handler = logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8", delay=False)
+        handler: logging.Handler = logging.FileHandler(
+            LOG_FILE,
+            mode="a",
+            encoding="utf-8",
+        )
+
+    except Exception:
+        handler = logging.StreamHandler()
+
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -35,13 +49,15 @@ logger = _ensure_logger()
 
 
 def _mask_pii(text: str) -> str:
-    """Маскирует возможные PII (email, токены, пароли) в строке."""
-    # Маскируем email
-    text = re.sub(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "[email]", text)
-
-    # Маскируем password / token / secret, независимо от формата (= или :)
+    """Маскирует email, пароли и токены в тексте исключения."""
     text = re.sub(
-        r"(?i)(password|token|secret)\s*[:=]\s*['\"]?[^'\"]+['\"]?",
+        r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+        "[email]",
+        text,
+    )
+
+    text = re.sub(
+        r"(?i)(password|token|secret)\s*[:=]\s*['\"]?([^'\"\s]+)['\"]?",
         r"\1:[MASKED]",
         text,
     )
@@ -50,7 +66,7 @@ def _mask_pii(text: str) -> str:
 
 
 class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
-    """★★ C3 — централизованная обработка ошибок с маскированием PII."""
+    """C3★★ — централизованная обработка ошибок с маскированием PII и RFC7807."""
 
     async def dispatch(
         self,
@@ -60,21 +76,16 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
         try:
             return await call_next(request)
         except Exception as e:
-            # Пересоздаём логгер на случай, если файл удалили
-            if not os.path.exists(LOG_FILE):
-                open(LOG_FILE, "w").close()
+            log = _ensure_logger()
 
             safe_message = _mask_pii(str(e))
-            log = _ensure_logger()
             log.error(f"Unhandled error: {safe_message}", exc_info=False)
 
-            # Принудительно сбрасываем на диск
-            for h in log.handlers:
+            for h in list(log.handlers):
                 try:
                     h.flush()
                 except Exception as flush_err:
-                    # Безопасное логирование ошибки, без утечки деталей
-                    log.warning(f"Failed to flush log handler: {type(flush_err).__name__}")
+                    logger.warning(f"Failed to flush log handler: {type(flush_err).__name__}")
 
             problem = {
                 "type": "about:blank",
@@ -82,6 +93,7 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
                 "status": 500,
                 "detail": "An unexpected error occurred.",
             }
+
             return Response(
                 content=json.dumps(problem),
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
