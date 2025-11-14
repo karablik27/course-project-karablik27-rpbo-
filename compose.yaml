@@ -1,8 +1,44 @@
 services:
-  app:
-    build: .
+  okr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: okr_app
+
     ports:
       - "8000:8000"
+
     environment:
-      - PYTHONUNBUFFERED=1
-    profiles: ["dev"]
+      ENV: "prod"
+      ALLOWED_ORIGINS: "http://localhost:5173"
+      RESPONSE_MODEL_POLICY: "warn"
+
+    volumes:
+      - db_data:/data/db
+      - uploads:/app/uploads
+      - logs:/app/logs
+
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:./seccomp.json
+      - apparmor:okr-apparmor-profile
+
+    cap_drop:
+      - ALL
+
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/objectives"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  db_data:
+  uploads:
+  logs:

@@ -1,0 +1,31 @@
+profile okr-apparmor-profile flags=(attach_disconnected) {
+
+  file,
+  network,
+  capability,
+
+  /usr/bin/python3 rix,
+  /usr/local/bin/uvicorn rix,
+  /usr/local/bin/** rix,
+  /usr/lib/** mr,
+
+  /app/** rwklix,
+  /tmp/** rwklix,
+
+  # SQLite в реальном месте хранения
+  /data/db/** rwklix,
+
+  # System readable
+  /proc/** r,
+  deny /proc/sys/** rwklx,
+  deny /proc/sysrq-trigger rwklx,
+
+  deny /root/** rwklx,
+  deny /etc/passwd rw,
+  deny /etc/shadow rw,
+
+  /sys/devices/** r,
+  deny /sys/** rwklx,
+
+  deny /** w,
+}
