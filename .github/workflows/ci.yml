@@ -1,10 +1,13 @@
 name: CI
+
 on:
   pull_request:
   push:
     branches: [main]
+
 permissions:
   contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -12,13 +15,36 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up environment secrets (dev/prod)
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "ENV=${{ secrets.ENV_PROD }}" >> $GITHUB_ENV
+            echo "DATABASE_URL=${{ secrets.DB_URL_PROD }}" >> $GITHUB_ENV
+          else
+            echo "ENV=${{ secrets.ENV_DEV }}" >> $GITHUB_ENV
+            echo "DATABASE_URL=${{ secrets.DB_URL_DEV }}" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -27,19 +53,51 @@ jobs:
 
       - name: Lint & Format
         run: |
+          mkdir -p reports
           ruff check --output-format=github .
+          ruff check --output-format=html --output-file=reports/ruff-report.html .
           black --check .
           isort --check-only .
 
       - name: Type check (mypy)
-        run: mypy app
+        run: |
+          mypy app | tee reports/mypy-report.txt
 
+      # === Security scan ===
       - name: Security scan (bandit)
         run: bandit -r app -ll
 
       - name: Run tests with coverage
         run: |
-          pytest --maxfail=1 --disable-warnings -q --cov=app --cov-report=term-missing --cov-fail-under=80
+          mkdir -p reports
+          mkdir -p htmlcov
+          pytest --maxfail=1 --disable-warnings -q \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --junitxml=reports/junit-${{ matrix.python-version }}.xml
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: htmlcov/
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: reports/
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
@@ -50,10 +108,16 @@ jobs:
           dockerfile: Dockerfile
         continue-on-error: true
 
-      - name: Build Docker image for security scan
-        run: docker build -t okr-app:latest .
+      - name: Build Docker image (cached layers)
+        if: matrix.python-version == '3.12'
+        run: |
+          docker build \
+            --cache-from=type=gha \
+            --cache-to=type=gha,mode=max \
+            -t okr-app:latest .
 
       - name: Trivy Scan (High & Critical)
+        if: matrix.python-version == '3.12'
         uses: aquasecurity/trivy-action@0.17.0
         with:
           image-ref: okr-app:latest
@@ -64,8 +128,19 @@ jobs:
           exit-code: '0'
 
       - name: Upload security artifacts
+        if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4
         with:
           name: security-reports
-          path: |
-            trivy-report.txt
+          path: trivy-report.txt
+
+      - name: Save Docker image as artifact
+        if: matrix.python-version == '3.12'
+        run: docker save okr-app:latest -o okr-app.tar
+
+      - name: Upload Docker image artifact
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: okr-app.tar

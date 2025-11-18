@@ -19,6 +19,12 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SecDev Course App", version="0.2.1")
 
+
+@app.get("/")
+def root():
+    return {"status": "ok", "docs": "/docs"}
+
+
 # --------------------------------------------------------------------------------------
 # 1) CORS — СНАЧАЛА! (чтобы корректно обрабатывать preflight OPTIONS)
 #    Источники читаем из env ALLOWED_ORIGINS (через запятую), по умолчанию — локальный фронт
