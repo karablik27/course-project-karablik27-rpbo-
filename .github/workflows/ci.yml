@@ -55,7 +55,7 @@ jobs:
         run: |
           mkdir -p reports
           ruff check --output-format=github .
-          ruff check --output-format=html --output-file=reports/ruff-report.html .
+          ruff check --output-format=full > reports/ruff.txt
           black --check .
           isort --check-only .
 
