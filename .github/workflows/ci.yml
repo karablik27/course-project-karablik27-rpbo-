@@ -82,21 +82,21 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: test-reports-${{ matrix.python-version }}
           path: reports/
 
       - name: Upload coverage HTML
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-html
+          name: coverage-html-${{ matrix.python-version }}
           path: htmlcov/
 
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lint-reports
+          name: lint-reports-${{ matrix.python-version }}
           path: reports/
 
       - name: Pre-commit (all files)
