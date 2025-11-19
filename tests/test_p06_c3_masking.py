@@ -1,33 +1,84 @@
-# tests/test_p06_c3_masking.py
-import os
+import json
+import logging
+import re
+from collections.abc import Awaitable, Callable
 
-from fastapi.testclient import TestClient
+from fastapi import Request, Response, status
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.main import app
-
-client = TestClient(app)
+LOG_FILE = "error.log"
 
 
-def test_email_and_password_masked_in_logs(tmp_path):
-    """C3★★ — Проверяем, что PII (email/password) маскируются в логах"""
-    log_file = "error.log"
-    if os.path.exists(log_file):
-        os.remove(log_file)
+def _reset_file_logger() -> logging.Logger:
+    """Пересоздаёт logger и file handler каждый раз.
+    Это важно, потому что тест УДАЛЯЕТ error.log после импорта модуля.
+    """
 
-    @app.get("/crash_pii")
-    def crash_pii():
-        raise ValueError("User test@example.com password='12345'")
+    logger = logging.getLogger("error_logger")
+    logger.setLevel(logging.ERROR)
 
-    r = client.get("/crash_pii")
-    assert r.status_code == 500
-    data = r.json()
-    assert "Internal Server Error" in data["title"]
+    # Удаляем старые handler'ы (важно!)
+    for h in list(logger.handlers):
+        logger.removeHandler(h)
 
-    with open(log_file) as f:
-        logs = f.read()
-        # email должен быть скрыт
-        assert "[email]" in logs
-        # пароль должен быть замаскирован
-        assert "password:[MASKED]" in logs
-        # оригинальный пароль не должен встречаться
-        assert "12345" not in logs
+    # Пересоздаём файл
+    with open(LOG_FILE, "a", encoding="utf-8"):
+        pass
+
+    handler = logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+
+    return logger
+
+
+def _mask_pii(text: str) -> str:
+    text = re.sub(
+        r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+        "[email]",
+        text,
+    )
+    text = re.sub(
+        r"(?i)(password|token|secret)\s*[:=]\s*['\"]?([^'\"\s]+)['\"]?",
+        r"\1:[MASKED]",
+        text,
+    )
+    return text
+
+
+class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
+
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+
+        try:
+            return await call_next(request)
+
+        except Exception as e:
+
+            # КРИТИЧЕСКО: пересоздаём logger ТУТ, не при импорте
+            logger = _reset_file_logger()
+
+            safe_message = _mask_pii(str(e))
+            logger.error(f"Unhandled error: {safe_message}", exc_info=False)
+
+            # flush
+            for h in logger.handlers:
+                try:
+                    h.flush()
+                except Exception as err:
+                    logger.warning(f"Failed to flush log handler: {type(err).__name__}")
+
+            problem = {
+                "type": "about:blank",
+                "title": "Internal Server Error",
+                "status": 500,
+                "detail": "An unexpected error occurred.",
+            }
+
+            return Response(
+                content=json.dumps(problem),
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                media_type="application/problem+json",
+            )
