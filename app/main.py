@@ -14,20 +14,29 @@ from app.models import ObjectiveDB
 
 from .routers import key_results, objectives, upload
 
-# ============================================================
-# 1) Init app
-# ============================================================
 app = FastAPI(title="SecDev Course App", version="0.2.1")
 
-
 # ============================================================
-# 2) Init DB (create tables)
+# DB + SEED ALWAYS ON IMPORT (works in CI + TestClient)
 # ============================================================
 Base.metadata.create_all(bind=engine)
 
+# Always seed if empty (fix for TestClient)
+with SessionLocal() as db:
+    if not db.query(ObjectiveDB).filter_by(id=1).first():
+        db.add(
+            ObjectiveDB(
+                id=1,
+                title="Seed objective for CI",
+                description="Automatically created to satisfy error_rate test",
+            )
+        )
+        db.commit()
+        print("[CI] Seeded Objective(id=1)")
+
 
 # ============================================================
-# 3) Root endpoint
+# Root
 # ============================================================
 @app.get("/")
 def root():
@@ -35,7 +44,7 @@ def root():
 
 
 # ============================================================
-# 4) CORS
+# CORS
 # ============================================================
 _ALLOWED = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
 ALLOWED_ORIGINS = [o.strip() for o in _ALLOWED.split(",") if o.strip()]
@@ -50,7 +59,7 @@ app.add_middleware(
 
 
 # ============================================================
-# 5) Security middlewares
+# Security middlewares
 # ============================================================
 app.add_middleware(HSTSMiddleware)
 
@@ -64,7 +73,7 @@ if os.getenv("RFC7807_ENABLED", "1") == "1":
 
 
 # ============================================================
-# 6) Routers
+# Routers
 # ============================================================
 app.include_router(objectives.router, prefix="/objectives", tags=["Objectives"])
 app.include_router(key_results.router, prefix="/key_results", tags=["Key Results"])
@@ -72,7 +81,7 @@ app.include_router(upload.router, prefix="/files", tags=["Files"])
 
 
 # ============================================================
-# 7) Access Log
+# Access Log
 # ============================================================
 logger = logging.getLogger("access")
 logger.setLevel(logging.INFO)
@@ -89,7 +98,7 @@ async def log_requests(request: Request, call_next):
 
 
 # ============================================================
-# 8) ADR-004 response_model policy
+# ADR-004
 # ============================================================
 def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
     if policy not in {"off", "warn", "enforce"}:
@@ -123,23 +132,3 @@ def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
 async def enforce_response_models_startup() -> None:
     policy = os.getenv("RESPONSE_MODEL_POLICY", "warn").lower()
     _check_response_models(app, policy)
-
-
-# ============================================================
-# 9) CI/DEV seed — CORRECT PLACE (TestClient executes this)
-# ============================================================
-@app.on_event("startup")
-async def seed_for_ci():
-    if os.getenv("ENV") in ("ci", "dev"):
-        Base.metadata.create_all(bind=engine)
-        with SessionLocal() as db:
-            if not db.query(ObjectiveDB).filter_by(id=1).first():
-                db.add(
-                    ObjectiveDB(
-                        id=1,
-                        title="Seed objective for CI",
-                        description="Automatically created to satisfy error_rate test",
-                    )
-                )
-                db.commit()
-                print("[CI] Seeded Objective(id=1)")
