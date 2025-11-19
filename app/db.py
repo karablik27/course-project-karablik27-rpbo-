@@ -1,13 +1,27 @@
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-if os.environ.get("ENV") == "prod":
-    DATABASE_URL = "sqlite:////data/db/okr.db"
+env = os.environ.get("ENV", "local").lower()
+
+
+if env == "prod":
+    sqlite_path = Path("/data/db/okr.db")
+
+elif env == "ci":
+    sqlite_path = Path("./ci-test.db")
+
 else:
-    DATABASE_URL = "sqlite:///./okr.db"
+    sqlite_path = Path("./okr.db")
+
+
+sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+
+DATABASE_URL = f"sqlite:///{sqlite_path}"
+
 
 engine = create_engine(
     DATABASE_URL,
