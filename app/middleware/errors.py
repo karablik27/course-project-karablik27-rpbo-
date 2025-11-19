@@ -16,7 +16,8 @@ else:
 
 
 def _ensure_logger() -> logging.Logger:
-    """Создаёт безопасный FileLogger с fallback в stdout."""
+    """Создаёт FileLogger для error.log (требование тестов P06 C3★★)."""
+
     logger = logging.getLogger("error_logger")
     logger.setLevel(logging.ERROR)
 
@@ -25,16 +26,12 @@ def _ensure_logger() -> logging.Logger:
 
     try:
         os.makedirs(LOG_DIR, exist_ok=True)
+
         if not os.path.exists(LOG_FILE):
             with open(LOG_FILE, "a", encoding="utf-8"):
                 pass
 
-        handler: logging.Handler = logging.FileHandler(
-            LOG_FILE,
-            mode="a",
-            encoding="utf-8",
-        )
-
+        handler = logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8")
     except Exception:
         handler = logging.StreamHandler()
 
@@ -49,7 +46,7 @@ logger = _ensure_logger()
 
 
 def _mask_pii(text: str) -> str:
-    """Маскирует email, пароли и токены в тексте исключения."""
+    """Маскировка email и паролей."""
     text = re.sub(
         r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
         "[email]",
@@ -66,7 +63,7 @@ def _mask_pii(text: str) -> str:
 
 
 class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
-    """C3★★ — централизованная обработка ошибок с маскированием PII и RFC7807."""
+    """Централизованная обработка ошибок (RFC7807) + маскирование PII."""
 
     async def dispatch(
         self,
@@ -75,13 +72,13 @@ class ExceptionLoggingMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         try:
             return await call_next(request)
+
         except Exception as e:
-            log = _ensure_logger()
-
             safe_message = _mask_pii(str(e))
-            log.error(f"Unhandled error: {safe_message}", exc_info=False)
 
-            for h in list(log.handlers):
+            logger.error(f"Unhandled error: {safe_message}", exc_info=False)
+
+            for h in logger.handlers:
                 try:
                     h.flush()
                 except Exception as flush_err:
