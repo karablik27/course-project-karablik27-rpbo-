@@ -9,9 +9,12 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 env = os.environ.get("ENV", "local").lower()
 
 if env == "prod":
-    sqlite_path = Path("data/okr.db")
+    base_dir = Path(__file__).resolve().parent.parent  # /app
+    sqlite_path = base_dir / "data" / "okr.db"
+
 elif env == "ci":
     sqlite_path = Path("data/ci-test.db")
+
 else:
     sqlite_path = Path("okr.db")
 
