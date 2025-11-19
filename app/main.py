@@ -7,15 +7,32 @@ from fastapi import FastAPI, Request, Response
 from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
+from app.db import SessionLocal
 from app.middleware.errors import ExceptionLoggingMiddleware
 from app.middleware.limits import BodySizeLimitMiddleware
 from app.middleware.security import ApiKeyGateMiddleware, HSTSMiddleware
+from app.models import ObjectiveDB
 
 from .db import Base, engine
 from .routers import key_results, objectives, upload
 
 # === Инициализация БД (создаст таблицы, если их нет) ===
 Base.metadata.create_all(bind=engine)
+
+# === CI seed: создаём одну запись для тестов ===
+if os.getenv("ENV") == "ci":
+
+    with SessionLocal() as db:
+        if not db.query(ObjectiveDB).filter_by(id=1).first():
+            db.add(
+                ObjectiveDB(
+                    id=1,
+                    title="Seed objective for CI",
+                    description="Automatically created to satisfy error_rate test",
+                )
+            )
+            db.commit()
+            print("[CI] Seeded Objective(id=1)")
 
 app = FastAPI(title="SecDev Course App", version="0.2.1")
 
