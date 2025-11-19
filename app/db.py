@@ -1,28 +1,36 @@
-# app/db.py
 import os
 from collections.abc import Generator
+from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
-env = os.environ.get("ENV", "dev")
+env = os.environ.get("ENV", "dev").lower()
 
-# === PRODUCTION ===
-# Render пробрасывает ENV=prod → DB лежит в контейнерном /data/db/
-if env == "prod":
-    DATABASE_URL = "sqlite:////data/db/okr.db"
+# 1. Пытаемся прочитать DATABASE_URL
+database_url = os.environ.get("DATABASE_URL")
 
-# === DEV + CI ===
-# И локально, и в GitHub Actions тесты должны использовать okr.db в корне
+if database_url:
+    DATABASE_URL = database_url
+
 else:
-    DATABASE_URL = "sqlite:///./okr.db"
+    # fallback режим
+    if env == "prod":
+        sqlite_path = Path("/data/okr.db")
+    elif env == "ci":
+        sqlite_path = Path("data/ci-test.db")
+    else:
+        sqlite_path = Path("okr.db")
+
+    sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+    DATABASE_URL = f"sqlite:///{sqlite_path}"
 
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False},
 )
 
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
