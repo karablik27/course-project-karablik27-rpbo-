@@ -22,15 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up environment secrets (dev/prod)
+      - name: Force CI database config
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            echo "ENV=${{ secrets.ENV_PROD }}" >> $GITHUB_ENV
-            echo "DATABASE_URL=${{ secrets.DB_URL_PROD }}" >> $GITHUB_ENV
-          else
-            echo "ENV=${{ secrets.ENV_DEV }}" >> $GITHUB_ENV
-            echo "DATABASE_URL=${{ secrets.DB_URL_DEV }}" >> $GITHUB_ENV
-          fi
+          echo "ENV=ci" >> $GITHUB_ENV
+          echo "DATABASE_URL=" >> $GITHUB_ENV
+
 
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
