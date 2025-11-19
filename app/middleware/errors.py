@@ -16,8 +16,7 @@ else:
 
 
 def _ensure_logger() -> logging.Logger:
-    """Создаёт FileLogger для error.log (требование тестов P06 C3★★)."""
-
+    """Создаёт безопасный FileLogger с гарантией создания error.log."""
     logger = logging.getLogger("error_logger")
     logger.setLevel(logging.ERROR)
 
@@ -27,11 +26,15 @@ def _ensure_logger() -> logging.Logger:
     try:
         os.makedirs(LOG_DIR, exist_ok=True)
 
-        if not os.path.exists(LOG_FILE):
-            with open(LOG_FILE, "a", encoding="utf-8"):
-                pass
+        with open(LOG_FILE, "a", encoding="utf-8"):
+            pass
 
-        handler = logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8")
+        handler = logging.FileHandler(
+            LOG_FILE,
+            mode="a",
+            encoding="utf-8",
+        )
+
     except Exception:
         handler = logging.StreamHandler()
 
