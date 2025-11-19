@@ -8,17 +8,17 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 env = os.environ.get("ENV", "local").lower()
 
+
 if env == "prod":
-    base_dir = Path(__file__).resolve().parent.parent  # /app
-    sqlite_path = base_dir / "data" / "okr.db"
+    sqlite_path = Path("/data/okr.db")
 
 elif env == "ci":
     sqlite_path = Path("data/ci-test.db")
 
 else:
     sqlite_path = Path("okr.db")
-
 sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+
 
 DATABASE_URL = f"sqlite:///{sqlite_path}"
 
