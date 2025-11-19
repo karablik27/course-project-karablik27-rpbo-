@@ -1,2 +1,8 @@
-2025-11-14 20:38:55,142 - ERROR - Unhandled error: User [email] password:[MASKED]
-2025-11-14 20:38:55,149 - ERROR - Unhandled error: Sensitive server info
+2025-11-19 22:24:37,318 - ERROR - Unhandled error: Test crash
+2025-11-19 22:24:37,418 - ERROR - Unhandled error: Sensitive server info
+2025-11-19 22:26:41,488 - ERROR - Unhandled error: Test crash
+2025-11-19 22:26:41,590 - ERROR - Unhandled error: Sensitive server info
+2025-11-19 22:37:50,389 - ERROR - Unhandled error: Test crash
+2025-11-19 22:37:50,495 - ERROR - Unhandled error: Sensitive server info
+2025-11-19 23:01:30,160 - ERROR - Unhandled error: Test crash
+2025-11-19 23:01:30,266 - ERROR - Unhandled error: Sensitive server info
