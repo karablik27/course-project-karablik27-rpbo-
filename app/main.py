@@ -21,27 +21,13 @@ app = FastAPI(title="SecDev Course App", version="0.2.1")
 
 
 # ============================================================
-# 2) Init DB
+# 2) Init DB (create tables)
 # ============================================================
 Base.metadata.create_all(bind=engine)
 
-# Seed ONLY for CI/dev
-if os.getenv("ENV") in ("ci", "dev"):
-    with SessionLocal() as db:
-        if not db.query(ObjectiveDB).filter_by(id=1).first():
-            db.add(
-                ObjectiveDB(
-                    id=1,
-                    title="Seed objective for CI",
-                    description="Automatically created to satisfy error_rate test",
-                )
-            )
-            db.commit()
-            print("[CI] Seeded Objective(id=1)")
-
 
 # ============================================================
-# 3) Root
+# 3) Root endpoint
 # ============================================================
 @app.get("/")
 def root():
@@ -64,33 +50,21 @@ app.add_middleware(
 
 
 # ============================================================
-# 5) HSTS
+# 5) Security middlewares
 # ============================================================
 app.add_middleware(HSTSMiddleware)
 
-
-# ============================================================
-# 6) Body Limit
-# ============================================================
 if os.getenv("BODY_LIMIT_ENABLED", "1") == "1":
     app.add_middleware(BodySizeLimitMiddleware)
 
-
-# ============================================================
-# 7) API Key Gate
-# ============================================================
 app.add_middleware(ApiKeyGateMiddleware)
 
-
-# ============================================================
-# 8) RFC7807 Error wrapper
-# ============================================================
 if os.getenv("RFC7807_ENABLED", "1") == "1":
     app.add_middleware(ExceptionLoggingMiddleware)
 
 
 # ============================================================
-# 9) Routers
+# 6) Routers
 # ============================================================
 app.include_router(objectives.router, prefix="/objectives", tags=["Objectives"])
 app.include_router(key_results.router, prefix="/key_results", tags=["Key Results"])
@@ -98,7 +72,7 @@ app.include_router(upload.router, prefix="/files", tags=["Files"])
 
 
 # ============================================================
-# 10) Access log
+# 7) Access Log
 # ============================================================
 logger = logging.getLogger("access")
 logger.setLevel(logging.INFO)
@@ -115,7 +89,7 @@ async def log_requests(request: Request, call_next):
 
 
 # ============================================================
-# 11) ADR-004 response_model check
+# 8) ADR-004 response_model policy
 # ============================================================
 def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
     if policy not in {"off", "warn", "enforce"}:
@@ -124,15 +98,15 @@ def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
     if policy == "off":
         return
 
-    skip = {"/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
+    skip_paths = {"/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"}
     bad = []
 
     for route in app.routes:
         if not isinstance(route, APIRoute):
             continue
-        if route.path in skip:
+        if route.path in skip_paths:
             continue
-        if not set(route.methods or set()) & {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+        if not (set(route.methods or set()) & {"GET", "POST", "PUT", "PATCH", "DELETE"}):
             continue
         if route.response_model is None:
             bad.append((route.path, sorted(route.methods)))
@@ -149,3 +123,23 @@ def _check_response_models(app: FastAPI, policy: str = "warn") -> None:
 async def enforce_response_models_startup() -> None:
     policy = os.getenv("RESPONSE_MODEL_POLICY", "warn").lower()
     _check_response_models(app, policy)
+
+
+# ============================================================
+# 9) CI/DEV seed — CORRECT PLACE (TestClient executes this)
+# ============================================================
+@app.on_event("startup")
+async def seed_for_ci():
+    if os.getenv("ENV") in ("ci", "dev"):
+        Base.metadata.create_all(bind=engine)
+        with SessionLocal() as db:
+            if not db.query(ObjectiveDB).filter_by(id=1).first():
+                db.add(
+                    ObjectiveDB(
+                        id=1,
+                        title="Seed objective for CI",
+                        description="Automatically created to satisfy error_rate test",
+                    )
+                )
+                db.commit()
+                print("[CI] Seeded Objective(id=1)")
