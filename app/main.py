@@ -10,6 +10,12 @@ from app.db import Base, SessionLocal, engine
 from app.middleware.errors import ExceptionLoggingMiddleware
 from app.middleware.limits import BodySizeLimitMiddleware
 from app.middleware.security import ApiKeyGateMiddleware, HSTSMiddleware
+from app.middleware.security_full import (
+    AuthZMiddleware,
+    IdempotencyKeyMiddleware,
+    RateLimitMiddleware,
+    TrustedHostMiddleware,
+)
 from app.models import ObjectiveDB
 
 from .routers import key_results, objectives, upload
@@ -58,6 +64,10 @@ app.add_middleware(
 )
 
 
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "testserver"])
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(IdempotencyKeyMiddleware)
+app.add_middleware(AuthZMiddleware)
 # ============================================================
 # Security middlewares
 # ============================================================
