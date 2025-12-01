@@ -1,0 +1,25 @@
+version: 1
+
+waivers:
+
+  - id: PYSEC-2023-74
+    package: python-multipart
+    detected_version: "0.0.9"
+    fixed_version: "0.0.18"
+    status: resolved
+    justification: >
+      Уязвимость была обнаружена в SCA (Grype). В рамках PR зависимость обновлена
+      до версии 0.0.18, где проблема устранена. Waiver сохранён как подтверждение
+      процесса управления уязвимостями.
+    link: "https://github.com/karablik27/course-project-karablik27-rpbo-/pull/49/commits/7f1c5a7517ca5ad12bb8cf2dbf87d056c6b031aa"
+    expires: 2026-01-01
+
+  # --- Шаблон для будущих исключений ---
+  - id: TEMPLATE-CVE-ID
+    package: example
+    detected_version: "x.y.z"
+    fixed_version: null
+    status: pending
+    justification: "Краткое описание причины появления waiver."
+    link: "https://github.com/example/repo/issues/1"
+    expires: 2026-12-31
