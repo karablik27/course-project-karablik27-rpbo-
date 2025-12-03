@@ -1,0 +1,38 @@
+name: Security Scan (P10)
+
+on:
+  push:
+    paths:
+      - "**/*.py"
+      - "security/**"
+      - ".github/workflows/security.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Run Semgrep SAST
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (p/ci + custom rules)
+        run: |
+          semgrep \
+            --config p/ci \
+            --config security/semgrep/rules.yml \
+            --sarif --output semgrep.sarif \
+            || true
+
+      - name: Upload SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep.sarif

@@ -1,0 +1,26 @@
+rules:
+  - id: no-print-debug
+    patterns:
+      - pattern: print(...)
+    message: "Debug print detected — remove before production."
+    severity: WARNING
+    languages: [python]
+
+  - id: avoid-exec-eval
+    patterns:
+      - pattern-either:
+          - pattern: exec(...)
+          - pattern: eval(...)
+    message: "Use of exec/eval is dangerous and should be replaced."
+    severity: ERROR
+    languages: [python]
+
+  - id: fastapi-open-endpoint
+    patterns:
+      - pattern: |
+          @app.get("/")
+          def $FUNC(...):
+              ...
+    message: "Root endpoint without authentication — verify if intended."
+    severity: INFO
+    languages: [python]
