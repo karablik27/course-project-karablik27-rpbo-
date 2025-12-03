@@ -38,7 +38,7 @@ with SessionLocal() as db:
             )
         )
         db.commit()
-        print("[CI] Seeded Objective(id=1)")
+        logging.getLogger("access").info("[CI] Seeded Objective(id=1)")
 
 
 # ============================================================
