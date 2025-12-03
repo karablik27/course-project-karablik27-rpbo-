@@ -64,7 +64,17 @@ app.add_middleware(
 )
 
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "testserver"])
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=[
+        "localhost",
+        "127.0.0.1",
+        "testserver",
+        "render.com",
+        "course-project-karablik27-rpbo.onrender.com",
+    ],
+)
+
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(IdempotencyKeyMiddleware)
 app.add_middleware(AuthZMiddleware)
