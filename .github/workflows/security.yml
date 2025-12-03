@@ -36,3 +36,33 @@ jobs:
         with:
           name: semgrep-report
           path: semgrep.sarif
+
+  gitleaks:
+    name: Run Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 \
+            -o /usr/local/bin/gitleaks
+          chmod +x /usr/local/bin/gitleaks
+
+      - name: Run Gitleaks
+        run: |
+          gitleaks detect \
+            --config security/.gitleaks.toml \
+            --report-format json \
+            --report-path gitleaks.json \
+            --verbose \
+            --no-banner \
+            || true
+
+      - name: Upload Gitleaks Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks.json
