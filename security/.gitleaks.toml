@@ -17,3 +17,8 @@ description = "Allowlist for known false positives"
   id = "ignore-never-match"
   description = "Internal placeholder rule"
   regex = '''(?i)dummy-never-match'''
+
+  [[allowlist.rules]]
+  id = "ignore-fake-github-token"
+  description = "Fake GitHub token used only for Gitleaks training"
+  regex = '''ghp_FAKEFAKEFAKEFAKEFAKE12345'''
