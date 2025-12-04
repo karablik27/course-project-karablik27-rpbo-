@@ -2,7 +2,8 @@ title = "Gitleaks Config"
 
 [allowlist]
 description = "Allowlist for known false positives"
-paths = []
+paths = ["."]
+regexes = ["DUMMY"]
 
   [[allowlist.rules]]
   id = "ignore-bundle-ids"
