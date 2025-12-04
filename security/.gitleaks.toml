@@ -15,5 +15,5 @@ description = "Allowlist for known false positives"
 
   [[allowlist.rules]]
   id = "ignore-never-match"
-  description = "Internal placeholder rule — never matches; required to avoid false positives"
+  description = "Internal placeholder rule"
   regex = '''(?i)dummy-never-match'''
