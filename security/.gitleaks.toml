@@ -1,6 +1,6 @@
 title = "Gitleaks Config"
 
-[allowlist]
+[[allowlists]]
 stopwords = []
 description = "Allowlist for known false positives"
 
