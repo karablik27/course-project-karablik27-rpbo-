@@ -2,19 +2,15 @@ title = "Gitleaks Config"
 
 [allowlist]
 description = "Allowlist for known false positives"
-paths = ["README.md"]
 
   [[allowlist.rules]]
   id = "ignore-bundle-ids"
-  description = "Bundle IDs / dummy app IDs — not secrets"
   regex = '''(?i)(com\.example\.|app\.example\.)'''
 
   [[allowlist.rules]]
   id = "ignore-test-tokens"
-  description = "Ignore test/dummy tokens"
   regex = '''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)'''
 
   [[allowlist.rules]]
   id = "ignore-never-match"
-  description = "Internal placeholder rule"
   regex = '''(?i)dummy-never-match'''
