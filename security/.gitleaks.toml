@@ -2,7 +2,7 @@ title = "Gitleaks Config"
 
 [[allowlists]]
 description = "Root allowlist block (required by Gitleaks 8)"
-stopwords = []
+stopwords = ["IGNORE_NOTHING"]
 
 [[allowlists]]
 description = "Ignore bundle IDs"
