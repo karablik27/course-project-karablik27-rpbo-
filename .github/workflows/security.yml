@@ -48,11 +48,7 @@ jobs:
       - name: Run Gitleaks (official GitHub Action)
         uses: gitleaks/gitleaks-action@v2
         with:
-          config-path: security/.gitleaks.toml
-          report-format: json
-          report-path: gitleaks.json
-        env:
-          GITLEAKS_LICENSE: ""
+          args: detect --config=security/.gitleaks.toml --report-format=json --report-path=gitleaks.json
 
       - name: Upload Gitleaks Report
         uses: actions/upload-artifact@v4
