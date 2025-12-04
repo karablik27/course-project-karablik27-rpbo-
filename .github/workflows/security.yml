@@ -39,21 +39,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create evidence dir (host)
-        run: mkdir -p EVIDENCE/P10
-
       - name: Run Gitleaks via Docker
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}":/repo \
-            zricethezav/gitleaks:latest detect \
+          docker run --rm -v "${{ github.workspace }}":/repo alpine sh -c "
+            mkdir -p /repo/EVIDENCE/P10 &&
+            echo 'Running gitleaks...' &&
+            gitleaks detect \
               --config=/repo/security/.gitleaks.toml \
               --report-format=json \
               --report-path=/repo/EVIDENCE/P10/gitleaks.json \
               --source=/repo \
               --no-banner || true
+          "
 
-      - name: Show generated files
+      - name: Show files
         run: ls -R EVIDENCE/P10
 
       - name: Upload Gitleaks Report
