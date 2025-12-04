@@ -33,26 +33,30 @@ jobs:
           path: semgrep.sarif
 
   gitleaks:
-    name: Run Gitleaks Secret Scan
+    name: Run Gitleaks Secret Scan (Docker JSON)
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Gitleaks via Docker (JSON)
+      - name: Create evidence dir (host)
+        run: mkdir -p EVIDENCE/P10
+
+      - name: Run Gitleaks via Docker
         run: |
-          mkdir -p EVIDENCE/P10
-          docker run --rm -v $PWD:/repo zricethezav/gitleaks:latest \
-            detect --no-banner \
+          docker run --rm \
+            -v "${{ github.workspace }}":/repo \
+            zricethezav/gitleaks:latest detect \
               --config=/repo/security/.gitleaks.toml \
-              --source=/repo \
               --report-format=json \
               --report-path=/repo/EVIDENCE/P10/gitleaks.json \
-            || true
+              --source=/repo \
+              --no-banner || true
 
-      - name: Show files
-        run: ls -R .
+      - name: Show generated files
+        run: ls -R EVIDENCE/P10
 
-      - name: Upload Gitleaks JSON Report
+      - name: Upload Gitleaks Report
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
