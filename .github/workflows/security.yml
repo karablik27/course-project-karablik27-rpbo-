@@ -48,11 +48,22 @@ jobs:
       - name: Install Gitleaks (official script)
         run: |
           curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh \
-            | bash -s -- -b /usr/local/bin
+            | bash -s -- -b ./bin
+
+          mkdir -p $HOME/.local/bin
+          mv ./bin/gitleaks $HOME/.local/bin/gitleaks
+
+          # Add to PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify Gitleaks install
+        run: |
+          which gitleaks || true
+          ls -la $HOME/.local/bin
+          gitleaks version
 
       - name: Run Gitleaks
         run: |
-          gitleaks version
           gitleaks detect \
             --config security/.gitleaks.toml \
             --report-format json \
@@ -61,8 +72,10 @@ jobs:
             --verbose \
             || true
 
-      - name: List files after scan
-        run: ls -la .
+      - name: Show output files
+        run: |
+          echo "Workspace files:"
+          ls -la .
 
       - name: Upload Gitleaks Report
         uses: actions/upload-artifact@v4
