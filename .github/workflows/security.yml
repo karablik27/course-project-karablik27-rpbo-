@@ -45,40 +45,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Gitleaks
+      - name: Install Gitleaks (official script)
         run: |
-          set -e
-          TAG=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep tag_name | cut -d '"' -f 4)
-          FILE="gitleaks_${TAG#v}_linux_x64.tar.gz"
-
-          echo "Downloading $FILE"
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/${TAG}/${FILE}" -o gitleaks.tar.gz
-
-          echo "Extracting..."
-          tar -xzf gitleaks.tar.gz
-
-          # Find extracted folder
-          DIR=$(find . -type d -name "gitleaks_*_linux_x64")
-          echo "Extracted dir: $DIR"
-
-          chmod +x "$DIR/gitleaks"
-          mv "$DIR/gitleaks" /usr/local/bin/gitleaks
+          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh \
+            | bash -s -- -b /usr/local/bin
 
       - name: Run Gitleaks
         run: |
-          set -x
-          ls -la .
           gitleaks version
           gitleaks detect \
             --config security/.gitleaks.toml \
             --report-format json \
             --report-path gitleaks.json \
-            --verbose \
             --no-banner \
+            --verbose \
             || true
 
-      - name: Show produced files
-        run: ls -la
+      - name: List files after scan
+        run: ls -la .
 
       - name: Upload Gitleaks Report
         uses: actions/upload-artifact@v4
