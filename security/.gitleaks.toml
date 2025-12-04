@@ -2,7 +2,7 @@ title = "Gitleaks Config"
 
 [allowlist]
 description = "Allowlist for known false positives"
-paths = []
+paths = ["README.md"]
 
   [[allowlist.rules]]
   id = "ignore-bundle-ids"
@@ -16,5 +16,5 @@ paths = []
 
   [[allowlist.rules]]
   id = "ignore-never-match"
-  description = "Internal placeholder"
+  description = "Internal placeholder rule"
   regex = '''(?i)dummy-never-match'''
