@@ -38,18 +38,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: security/.gitleaks.toml
-          report-format: json
-          report-path: gitleaks.json
+      - name: Run Gitleaks via Docker (JSON)
+        run: |
+          mkdir -p EVIDENCE/P10
+          docker run --rm -v $PWD:/repo zricethezav/gitleaks:latest \
+            detect --no-banner \
+              --config=/repo/security/.gitleaks.toml \
+              --source=/repo \
+              --report-format=json \
+              --report-path=/repo/EVIDENCE/P10/gitleaks.json \
+            || true
 
-      - name: List files
-        run: ls -la
+      - name: Show files
+        run: ls -R .
 
-      - name: Upload report
+      - name: Upload Gitleaks JSON Report
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
-          path: gitleaks.json
+          path: EVIDENCE/P10/gitleaks.json
