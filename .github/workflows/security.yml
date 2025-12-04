@@ -45,37 +45,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Gitleaks (official script)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/master/install.sh \
-            | bash -s -- -b ./bin
-
-          mkdir -p $HOME/.local/bin
-          mv ./bin/gitleaks $HOME/.local/bin/gitleaks
-
-          # Add to PATH
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Verify Gitleaks install
-        run: |
-          which gitleaks || true
-          ls -la $HOME/.local/bin
-          gitleaks version
-
-      - name: Run Gitleaks
-        run: |
-          gitleaks detect \
-            --config security/.gitleaks.toml \
-            --report-format json \
-            --report-path gitleaks.json \
-            --no-banner \
-            --verbose \
-            || true
-
-      - name: Show output files
-        run: |
-          echo "Workspace files:"
-          ls -la .
+      - name: Run Gitleaks (official GitHub Action)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: security/.gitleaks.toml
+          report-format: json
+          report-path: gitleaks.json
+        env:
+          GITLEAKS_LICENSE: ""
 
       - name: Upload Gitleaks Report
         uses: actions/upload-artifact@v4
