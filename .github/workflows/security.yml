@@ -16,22 +16,18 @@ jobs:
     name: Run Semgrep SAST
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Semgrep
-        run: pip install semgrep
+      - run: pip install semgrep
 
-      - name: Run Semgrep (p/ci + custom rules)
-        run: |
+      - run: |
           semgrep \
             --config p/ci \
             --config security/semgrep/rules.yml \
             --sarif --output semgrep.sarif \
             || true
 
-      - name: Upload SARIF
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: semgrep-report
           path: semgrep.sarif
@@ -39,21 +35,20 @@ jobs:
   gitleaks:
     name: Run Gitleaks Secret Scan
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Run Gitleaks (correct)
-        uses: zricethezav/gitleaks-action@v1
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
         with:
-          entryPoint: gitleaks
-          args: detect --config=security/.gitleaks.toml --report-format=json --report-path=gitleaks.json
+          config-path: security/.gitleaks.toml
+          report-format: json
+          report-path: gitleaks.json
 
-      - name: Show files
+      - name: List files
         run: ls -la
 
-      - name: Upload Gitleaks Report
+      - name: Upload report
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
