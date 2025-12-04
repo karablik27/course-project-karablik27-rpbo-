@@ -12,3 +12,8 @@ description = "Allowlist for known false positives"
   id = "ignore-test-tokens"
   description = "Ignore test/dummy tokens"
   regex = '''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)'''
+
+  [[allowlist.rules]]
+  id = "ignore-never-match"
+  description = "Internal placeholder rule — never matches; required to avoid false positives"
+  regex = '''(?i)dummy-never-match'''
