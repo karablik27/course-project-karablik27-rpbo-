@@ -15,7 +15,6 @@ jobs:
   semgrep:
     name: Run Semgrep SAST
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,9 +44,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run Gitleaks (correct action)
+      - name: Run Gitleaks (correct)
         uses: zricethezav/gitleaks-action@v1
         with:
+          entryPoint: gitleaks
           args: detect --config=security/.gitleaks.toml --report-format=json --report-path=gitleaks.json
 
       - name: Show files
