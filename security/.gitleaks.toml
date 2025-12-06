@@ -1,17 +1,17 @@
 title = "Gitleaks Config"
 
-[[allowlists]]
-description = "Root allowlist block (required by Gitleaks 8)"
-stopwords = ["IGNORE_NOTHING"]
+[allowlist]
+description = "Allow false positives"
+paths = ["EVIDENCE/", ".github/"]
 
-[[allowlists]]
-description = "Ignore bundle IDs"
-regexes = ['''(?i)(com\.example\.|app\.example\.)''']
+  [[allowlist.regexes]]
+  description = "Ignore bundle IDs"
+  regex = "(?i)(com\\.example\\.|app\\.example\\.)"
 
-[[allowlists]]
-description = "Ignore test dummy tokens"
-regexes = ['''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)''']
+  [[allowlist.regexes]]
+  description = "Ignore test tokens"
+  regex = "(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)"
 
-[[allowlists]]
-description = "Never match placeholder"
-regexes = ['''(?i)dummy-never-match''']
+  [[allowlist.regexes]]
+  description = "Never match placeholder"
+  regex = "(?i)dummy-never-match"

@@ -1,1 +1,1 @@
-API_TOKEN = "ghp_1234567890abcdef1234567890abcdef1234"  # noqa: S105
+API_TOKEN = "ghp_1234567890abgdef1234567890abcdef1234"  # noqa: S105
