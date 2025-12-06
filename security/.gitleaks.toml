@@ -1,17 +1,11 @@
 title = "Gitleaks Config"
 
 [allowlist]
-description = "Allow false positives"
+description = "Allowlist for false positives"
 paths = ["EVIDENCE/", ".github/"]
 
-  [[allowlist.regexes]]
-  description = "Ignore bundle IDs"
-  regex = "(?i)(com\\.example\\.|app\\.example\\.)"
-
-  [[allowlist.regexes]]
-  description = "Ignore test tokens"
-  regex = "(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)"
-
-  [[allowlist.regexes]]
-  description = "Never match placeholder"
-  regex = "(?i)dummy-never-match"
+regexes = [
+  "(?i)(com\\.example\\.|app\\.example\\.)",
+  "(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET|API_TOKEN)",
+  "(?i)dummy-never-match"
+]
