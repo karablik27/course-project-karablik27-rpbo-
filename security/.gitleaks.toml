@@ -1,12 +1,12 @@
-title = "Gitleaks Config"
+title = "Custom Gitleaks Config"
 
 [extend]
-useDefaultRules = true
+useDefault = true
 
 [[allowlists]]
-description = "Ignore known safe patterns"
-regexes = [
-  '''(?i)(com\.example\.|app\.example\.)''',
-  '''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)''',
-  '''(?i)dummy-never-match'''
-]
+description = "Ignore bundle IDs"
+regexes = ['''(?i)(com\.example\.|app\.example\.)''']
+
+[[allowlists]]
+description = "Ignore test dummy tokens"
+regexes = ['''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)''']
