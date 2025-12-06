@@ -1,0 +1,1 @@
+API_TOKEN = "ghp_1244567890abgdef1234567890abcdef1234"  # noqa: S105

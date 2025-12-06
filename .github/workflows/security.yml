@@ -1,0 +1,65 @@
+name: Security Scan (P10)
+
+on:
+  push:
+    paths:
+      - "**/*.py"
+      - "security/**"
+      - ".github/workflows/security.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Run Semgrep SAST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: pip install semgrep
+
+      - run: |
+          semgrep \
+            --config p/ci \
+            --config security/semgrep/rules.yml \
+            --sarif --output semgrep.sarif \
+            || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep.sarif
+
+  gitleaks:
+    name: Run Gitleaks Secret Scan (Docker JSON)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare evidence directory (outside container)
+        run: mkdir -p EVIDENCE/P10
+
+      - name: Run Gitleaks via Docker (correct)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/repo \
+            zricethezav/gitleaks:latest detect \
+              --source=/repo \
+              --config=/repo/security/.gitleaks.toml \
+              --report-format=json \
+              --report-path=/repo/EVIDENCE/P10/gitleaks.json \
+              --no-banner || true
+
+      - name: Show files
+        run: ls -la EVIDENCE/P10
+
+      - name: Upload Gitleaks Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: EVIDENCE/P10/gitleaks.json

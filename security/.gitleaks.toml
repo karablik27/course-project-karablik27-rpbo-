@@ -1,0 +1,12 @@
+title = "Custom Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignore bundle IDs"
+regexes = ['''(?i)(com\.example\.|app\.example\.)''']
+
+[[allowlists]]
+description = "Ignore test dummy tokens"
+regexes = ['''(TEST_TOKEN|DUMMY_KEY|EXAMPLE_SECRET)''']
