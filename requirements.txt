@@ -1,4 +1,4 @@
-fastapi==0.112.2
+fastapi==0.115.5
 uvicorn==0.30.5
 sqlalchemy==2.0.43
 python-multipart==0.0.18
