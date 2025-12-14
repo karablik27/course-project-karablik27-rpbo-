@@ -5,20 +5,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 env = os.environ.get("ENV", "dev").lower()
-
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
     DATABASE_URL = database_url
 else:
-    if env == "prod":
-        sqlite_path = Path("data/prod.db")
-    elif env == "ci":
-        sqlite_path = Path("data/ci.db")
-    else:
-        sqlite_path = Path("data/dev.db")
+    BASE_DB_DIR = Path("/data/db")
+    BASE_DB_DIR.mkdir(parents=True, exist_ok=True)
 
-    sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+    if env == "prod":
+        sqlite_path = BASE_DB_DIR / "prod.db"
+    elif env == "ci":
+        sqlite_path = BASE_DB_DIR / "ci.db"
+    else:
+        sqlite_path = BASE_DB_DIR / "dev.db"
+
     DATABASE_URL = f"sqlite:///{sqlite_path}"
 
 engine = create_engine(
