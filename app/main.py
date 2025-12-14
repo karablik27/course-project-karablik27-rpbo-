@@ -70,6 +70,7 @@ app.add_middleware(
         "localhost",
         "127.0.0.1",
         "testserver",
+        "localhost:8000",
         "render.com",
         "course-project-karablik27-rpbo.onrender.com",
     ],
