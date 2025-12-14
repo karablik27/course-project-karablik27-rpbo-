@@ -22,7 +22,6 @@ services:
     security_opt:
       - no-new-privileges:true
       - seccomp:./seccomp.json
-      - apparmor:okr-apparmor-profile
 
     cap_drop:
       - ALL
