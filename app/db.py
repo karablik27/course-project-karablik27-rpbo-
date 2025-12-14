@@ -10,7 +10,15 @@ database_url = os.environ.get("DATABASE_URL")
 if database_url:
     DATABASE_URL = database_url
 else:
-    BASE_DB_DIR = Path("/data/db")
+    docker_db_dir = Path("/data/db")
+
+    local_db_dir = Path("data")
+
+    if docker_db_dir.exists() and os.access(docker_db_dir, os.W_OK):
+        BASE_DB_DIR = docker_db_dir
+    else:
+        BASE_DB_DIR = local_db_dir
+
     BASE_DB_DIR.mkdir(parents=True, exist_ok=True)
 
     if env == "prod":
